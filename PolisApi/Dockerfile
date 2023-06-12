@@ -1,22 +1,20 @@
-#base image
-from mcr.microsoft.com/dotnet/aspnet:7.0 as base
-workdir /app
-expose 80
-expose 443
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
 
-#build image
-from mcr.microsoft.com/dotnet/sdk:7.0 as build
-workdir /src
-copy ["PolisApi.csproj","."]
-run dotnet restore "PolisApi.csproj"
-copy . .
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+COPY ["PolisApi.csproj", "PolisApi/"]
+RUN dotnet restore "PolisApi/PolisApi.csproj" -r linux-arm64
+WORKDIR "/src/PolisApi"
+COPY . .
+RUN dotnet build "PolisApi.csproj" -c Release -o /app/build
 
-#publish image
-from build as publish
-run dotnet publish "PolisApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
+FROM build AS publish
+RUN dotnet publish "PolisApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-#final image
-from base as final
-workdir /app
-copy --from=publish /app/publish .
-entrypoint ["dotnet","PolisApi.dll"]
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "PolisApi.dll"]

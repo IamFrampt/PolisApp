@@ -1,22 +1,20 @@
-#base image
-from mcr.microsoft.com/dotnet/aspnet:7.0 as base
-workdir /app
-expose 80
-expose 443
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
 
-#build image
-from mcr.microsoft.com/dotnet/sdk:7.0 as build
-workdir /src
-copy ["PolisApp.csproj","."]
-run dotnet restore "PolisApp.csproj"
-copy . .
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+COPY ["PolisApp.csproj", "PolisApp/"]
+RUN dotnet restore "PolisApp/PolisApp.csproj" -r linux-arm64
+WORKDIR "/src/PolisApp"
+COPY . .
+RUN dotnet build "PolisApp.csproj" -c Release -o /app/build
 
-#publish image
-from build as publish
-run dotnet publish "PolisApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
+FROM build AS publish
+RUN dotnet publish "PolisApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-#final image
-from base as final
-workdir /app
-copy --from=publish /app/publish .
-entrypoint ["dotnet","PolisApp.dll"]
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "PolisApp.dll"]
