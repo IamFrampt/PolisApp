@@ -24,15 +24,28 @@
         <hr />
     }
 }
+else
+{
+    <p>Inga brott i denna stad</p>
+}
 
 @code{
 
     public async void Handlethisshit()
     {
-        var res = await client.GetAsync($"http://host.docker.internal:8081/Stad?name={NamnpaStad.Namn}");
-        //http://host.docker.internal:32776
-        var content = await res.Content.ReadAsStringAsync();
-        NameStad = JsonConvert.DeserializeObject<List<SearchedStad>>(content);
+        try
+        {
+            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={NamnpaStad.Namn}");
+            //var res = await client.GetAsync($"http://host.docker.internal:8081?name={NamnpaStad.Namn}");
+            //http://host.docker.internal:32776
+            var content = await res.Content.ReadAsStringAsync();
+            NameStad = JsonConvert.DeserializeObject<List<SearchedStad>>(content);
+            StateHasChanged();
+        }
+        catch
+        {
+            NameStad = null;
+        }
     }
 
     Stad NamnpaStad = new();
