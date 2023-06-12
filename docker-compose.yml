@@ -1,0 +1,19 @@
+version: '3.4'
+
+services:
+  polisapp:
+    image: ${DOCKER_REGISTRY-}polisapp    
+    depends_on:
+      - "polisapi"
+    ports: 
+      - "8080:80"
+    build:
+      context: .
+      dockerfile: PolisApp/Dockerfile
+  polisapi:
+    image: ${DOCKER_REGISTRY-}polisapi
+    ports: 
+      - "8081:80"
+    build:
+      context: .
+      dockerfile: PolisApi/Dockerfile
