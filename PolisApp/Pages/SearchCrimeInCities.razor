@@ -324,10 +324,6 @@
     [Parameter]
     public EventCallback<List<CrimeDTO>> crimeListChanged { get; set; }
 
-    public void DeselectAllOptions()
-    {
-        options.Clear();
-    }
 
     private async Task GettingAllCrimesFromSelectedCities()
     {
