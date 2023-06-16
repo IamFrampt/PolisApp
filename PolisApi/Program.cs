@@ -19,7 +19,7 @@ if (app.Environment.IsDevelopment())
 app.MapGet("/Stad", async (string name) =>
 {
     HttpClient client = new HttpClient();
-    var Staddusokt = await client.GetAsync($"http://polisen.se/api/events?locationname={name}");
+    var Staddusokt = await client.GetAsync($"http://polisen.se/api/events{name}");
     var res = await Staddusokt.Content.ReadAsStringAsync();
 
     var jabba = JsonConvert.DeserializeObject<List<SearchedStad>>(res);

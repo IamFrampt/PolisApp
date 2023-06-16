@@ -11,11 +11,12 @@
 
 <MudText Align="Align.Center" Typo="Typo.h4" Class="mt-10">Sök efter senaste brotten:</MudText>
 
-<SearchCrimeInCities @ref="searchCrimeInCities" NameStadChanged="HandleNameStadChanged"></SearchCrimeInCities>
+    <SearchCrimeInCities crimeListChanged="HandleCrimeListChanged"></SearchCrimeInCities>
+    @* <SearchForTypeOfCrime crimeListChanged="HandleCrimeListChanged"></SearchForTypeOfCrime>*@
 
-@if (NameStad is not null && NameStad.Count > 0)
+@if (crimeList is not null && crimeList.Count > 0)
 {
-    @foreach (var stad in NameStad.Skip(AmountOfItemsToShowOnPage * pageNumber).Take(AmountOfItemsToShowOnPage * pageMultiplier))
+    @foreach (var stad in crimeList.Skip(AmountOfItemsToShowOnPage * pageNumber).Take(AmountOfItemsToShowOnPage * pageMultiplier))
         {
             <MudCard Outlined="true">
                 <MudCardContent>
@@ -38,7 +39,7 @@ else
     <div class="d-flex justify-center">
     <MudButtonGroup Ali Color="Color.Primary" Variant="Variant.Text" OverrideStyles="_overrideStyles">
         <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((AmountOfItemsToShowOnPage * pageNumber) == 0)">Föregående Sida</MudButton>
-        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((AmountOfItemsToShowOnPage * pageMultiplier) > NameStad.Count)>Nästa Sida</MudButton>
+        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((AmountOfItemsToShowOnPage * pageMultiplier) > crimeList.Count)>Nästa Sida</MudButton>
     </MudButtonGroup>
 </div>
 
@@ -50,22 +51,18 @@ else
 
 @code {
 
-    List<CityDTO> NameStad = new();
+    List<CrimeDTO> crimeList = new();
     private bool _overrideStyles;
     private string message { get; set; } = "Inga brott hittades.";
     bool IsDisabled = false;
-
-
-
-    private SearchCrimeInCities searchCrimeInCities = new();
 
     private int AmountOfItemsToShowOnPage = 10;
     private int pageNumber = 0;
     private int pageMultiplier = 1;
 
-    private void HandleNameStadChanged(List<CityDTO> updatedNameStad)
+    private void HandleCrimeListChanged(List<CrimeDTO> updatedNameStad)
     {
-        NameStad = updatedNameStad;
+        crimeList = updatedNameStad;
     }
 
     private void ChangeToPreviousPage()

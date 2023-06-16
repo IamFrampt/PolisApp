@@ -1,0 +1,158 @@
+﻿@using Newtonsoft.Json;
+@using PolisApp.Models;
+@using static PolisApp.Pages.Index;
+@inject HttpClient client;
+
+<MudSelect T="string" Label="Kategorier" MultiSelection="true" @bind-Value="value" @bind-SelectedValues="options">
+    @foreach (var state in typeOfCrimes)
+    {
+        <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
+    }
+</MudSelect>
+
+<MudButton Variant="Variant.Filled" Disabled="@_processing" Class="my-3" type="button" @onclick="GettingAllCrimesFromSelectedTypes">
+    @if (_processing)
+    {
+        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+        <MudText Class="ms-2">Hämtar brott</MudText>
+    }
+    else
+    {
+        <MudText>Sök efter brott</MudText>
+    }
+</MudButton>
+
+@code {
+
+    public List<CrimeDTO> crimeList = new();
+    private string value { get; set; } = "Nothing selected";
+    private IEnumerable<string> options { get; set; } = new HashSet<string>() { };
+    private string selectedOptionsString { get; set; } = "";
+
+    string[] typeOfCrimes = new string[]
+    {
+    "Alkohollagen",
+    "Anträffad död",
+    "Anträffat gods",
+    "Arbetsplatsolycka",
+    "Bedrägeri",
+    "Bombhot",
+    "Brand",
+    "Brand automatlarm",
+    "Bråk",
+    "Detonation",
+    "Djur skadat/omhändertaget",
+    "Ekobrott",
+    "Farligt föremål, misstänkt",
+    "Fjällräddning",
+    "Fylleri/LOB",
+    "Förfalskningsbrott",
+    "Försvunnen person",
+    "Gränskontroll",
+    "Häleri",
+    "Inbrott",
+    "Inbrott, försök",
+    "Knivlagen",
+    "Kontroll person/fordon",
+    "Lagen om hundar och katter",
+    "Larm inbrott",
+    "Larm överfall",
+    "Miljöbrott",
+    "Missbruk av urkund",
+    "Misshandel",
+    "Misshandel, grov",
+    "Mord/dråp",
+    "Mord/dråp, försök",
+    "Motorfordon, anträffat stulet",
+    "Motorfordon, stöld",
+    "Narkotikabrott",
+    "Naturkatastrof",
+    "Ofog barn/ungdom",
+    "Ofredande/förargelse",
+    "Olaga frihetsberövande",
+    "Olaga hot",
+    "Olaga intrång/hemfridsbrott",
+    "Olovlig körning",
+    "Ordningslagen",
+    "Polisinsats/kommendering",
+    "Rattfylleri",
+    "Rån",
+    "Rån väpnat",
+    "Rån övrigt",
+    "Rån, försök",
+    "Räddningsinsats",
+    "Sammanfattning dag",
+    "Sammanfattning dygn",
+    "Sammanfattning eftermiddag",
+    "Sammanfattning förmiddag",
+    "Sammanfattning helg",
+    "Sammanfattning kväll",
+    "Sammanfattning kväll och natt",
+    "Sammanfattning natt",
+    "Sammanfattning vecka",
+    "Sedlighetsbrott",
+    "Sjukdom/olycksfall",
+    "Sjölagen",
+    "Skadegörelse",
+    "Skottlossning",
+    "Skottlossning, misstänkt",
+    "Spridning smittsamma kemikalier",
+    "Stöld",
+    "Stöld, försök",
+    "Stöld, ringa",
+    "Stöld/inbrott",
+    "Tillfälligt obemannat",
+    "Trafikbrott",
+    "Trafikhinder",
+    "Trafikkontroll",
+    "Trafikolycka",
+    "Trafikolycka, personskada",
+    "Trafikolycka, singel",
+    "Trafikolycka, smitning från",
+    "Trafikolycka, vilt",
+    "Uppdatering",
+    "Utlänningslagen",
+    "Vapenlagen",
+    "Varningslarm/haveri",
+    "Våld/hot mot tjänsteman",
+    "Våldtäkt",
+    "Våldtäkt, försök",
+    "Vållande till kroppsskada"
+    };
+
+    private bool _processing = false;
+
+    [Parameter]
+    public EventCallback<List<CrimeDTO>> crimeListChanged { get; set; }
+
+
+    private async Task GettingAllCrimesFromSelectedTypes()
+    {
+        try
+        {
+            _processing = true;
+            selectedOptionsString = "?type=" + string.Join(";", options);
+
+            selectedOptionsString = selectedOptionsString.Replace(" ", "%C2%A0");
+            selectedOptionsString = selectedOptionsString.Replace("å", "%C3%A5");
+            selectedOptionsString = selectedOptionsString.Replace("ä", "%C3%A4");
+            selectedOptionsString = selectedOptionsString.Replace("ö", "%C3%B6");
+            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={selectedOptionsString}");
+
+            if (!res.IsSuccessStatusCode)
+            {
+                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?name={selectedOptionsString}");
+            }
+
+            var content = await res.Content.ReadAsStringAsync();
+            crimeList = JsonConvert.DeserializeObject<List<CrimeDTO>>(content);
+            crimeListChanged.InvokeAsync(crimeList);
+            _processing = false;
+        }
+        catch
+        {
+            crimeList = null;
+        }
+    }
+
+}

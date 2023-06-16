@@ -24,7 +24,7 @@
 
 @code {
 
-    public List<CityDTO> NameStad = new();
+    public List<CrimeDTO> NameStad = new();
     private string value { get; set; } = "Nothing selected";
     private IEnumerable<string> options { get; set; } = new HashSet<string>() { };
     private string selectedOptionsString { get; set; } = "";
@@ -321,7 +321,7 @@
     private bool _processing = false;
 
     [Parameter]
-    public EventCallback<List<CityDTO>> NameStadChanged { get; set; }
+    public EventCallback<List<CrimeDTO>> crimeListChanged { get; set; }
 
 
     private async Task GettingAllCrimesFromSelectedCities()
@@ -329,7 +329,7 @@
         try
         {
             _processing = true;
-            selectedOptionsString = string.Join(";", options);
+            selectedOptionsString = "?locationname=" + string.Join(";", options);
             var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={selectedOptionsString}");
 
             if (!res.IsSuccessStatusCode)
@@ -338,8 +338,8 @@
             }
 
             var content = await res.Content.ReadAsStringAsync();
-            NameStad = JsonConvert.DeserializeObject<List<CityDTO>>(content);
-            NameStadChanged.InvokeAsync(NameStad);
+            NameStad = JsonConvert.DeserializeObject<List<CrimeDTO>>(content);
+            crimeListChanged.InvokeAsync(NameStad);
             _processing = false;
         }
         catch

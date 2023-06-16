@@ -1,7 +1,7 @@
 ﻿
 namespace PolisApp.Models;
 
-public class CityDTO
+public class CrimeDTO
 {
     public int Id { get; set; }
     public string Datetime { get; set; }
