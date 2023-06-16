@@ -8,16 +8,16 @@
 
     <label class="form-label">Stad</label>
     <InputText class="form-control" @bind-Value=NamnpaStad.Namn></InputText>
-    <button class="btn btn-success my-3" type="submit">Se alla dagens brott</button>
+    <button class="btn btn-success my-3" disabled="@running" type="submit">Se alla dagens brott</button>
 </EditForm>
 
 
 <H1 class="my-5">Här är alla brott i denna stad:</H1>
 <hr />
 
-@if (NameStad is not null || NameStad.Count > 0)
+@if (NameStad is not null && NameStad.Count > 0)
 {
-   @foreach(var stad in NameStad)
+   @foreach(var stad in NameStad.Take(10))
     {
         <h1>@stad.Name</h1>
         <p>@stad.Summary</p>
@@ -30,15 +30,27 @@ else
 }
 
 @code{
+    bool running = false;
+
 
     public async void Handlethisshit()
     {
+        running = true;
         try
         {
             var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={NamnpaStad.Namn}");
             //var res = await client.GetAsync($"http://host.docker.internal:8081?name={NamnpaStad.Namn}");
             var content = await res.Content.ReadAsStringAsync();
             NameStad = JsonConvert.DeserializeObject<List<SearchedStad>>(content);
+
+            if(content != "")
+            {
+                
+            if (NameStad.Count > 0)
+            {
+                running=false;
+            }
+            }
         }
         catch
         {
