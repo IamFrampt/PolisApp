@@ -15,9 +15,9 @@
 
 @if (crimeList is not null && crimeList.Count > 0)
 {
-    @foreach (var crime in crimeList.Skip(amountOfCrimesToShow * pageNumber).Take(amountOfCrimesToShow * pageMultiplier))
+    @foreach (var crime in crimeList.Skip(amountOfCrimesToShow * pageNumber).Take(amountOfCrimesToShow))
         {
-            <MudCard Outlined="true">
+            <MudCard Outlined="true" class ="mb-4">
                 <MudCardContent>
                     <MudText Typo="Typo.h4" Align="Align.Center">
                         @{
@@ -54,7 +54,7 @@ else
 
     <div class="d-flex justify-center">
     <MudButtonGroup Ali Color="Color.Primary" Variant="Variant.Text" OverrideStyles="_overrideStyles">
-        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((amountOfCrimesToShow * pageNumber) == 0)">Föregående Sida</MudButton>
+        <MudButton Class="me-5" Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((amountOfCrimesToShow * pageNumber) == 0)">Föregående Sida</MudButton>
         <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((amountOfCrimesToShow * pageMultiplier) > crimeList.Count)>Nästa Sida</MudButton>
     </MudButtonGroup>
 </div>
@@ -82,6 +82,8 @@ else
     {
         crimeList = updatedCrimeList;
         pageNumber = 0;
+        pageMultiplier = 1;
+        amountOfCrimesToShow = 10;
     }
 
     private void ChangeToPreviousPage()

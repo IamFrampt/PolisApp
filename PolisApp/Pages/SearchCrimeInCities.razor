@@ -3,7 +3,7 @@
 @using static PolisApp.Pages.Index;
 @inject HttpClient client;
 
-<MudSelect T="string" Label="Städer" MultiSelection="true" @bind-Value="value" @bind-SelectedValues="options">
+<MudSelect T="string" Label="Städer" SelectAll="true" MultiSelection="true" @bind-Value="value" @bind-SelectedValues="options">
     @foreach (var state in swedishCities)
     {
         <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
@@ -324,6 +324,10 @@
     [Parameter]
     public EventCallback<List<CrimeDTO>> crimeListChanged { get; set; }
 
+    public void DeselectAllOptions()
+    {
+        options.Clear();
+    }
 
     private async Task GettingAllCrimesFromSelectedCities()
     {
