@@ -19,8 +19,9 @@
         {
             <MudCard Outlined="true">
                 <MudCardContent>
-                    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-5">@stad.Name</MudText>
-                    <MudText Typo="Typo.body2" Align="Align.Center">@stad.Summary</MudText>
+                    <MudText Typo="Typo.h4" Align="Align.Center">@stad.Name.Substring(14,stad.Name.Length-14)</MudText>
+                    <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-5">@stad.Name.Substring(0,13)</MudText>
+                    <MudText Typo="Typo.body1" Align="Align.Center">@stad.Summary</MudText>
                 </MudCardContent>
                 <MudCardActions Class="justify-end">
                         <MudLink Href="@($"https://polisen.se{stad.Url}")" Target="_blank">Läs mer här!</MudLink>
