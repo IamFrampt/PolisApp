@@ -10,9 +10,6 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient();
 var app = builder.Build();
 
-
-//builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:32798") });
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

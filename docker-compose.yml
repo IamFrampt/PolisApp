@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   polisapp:
-    image: ${DOCKER_REGISTRY-}polisapp    
+    image: frampt/polisapp    
     depends_on:
       - "polisapi"
     ports: 
@@ -10,8 +10,9 @@ services:
     build:
       context: .
       dockerfile: PolisApp/Dockerfile
+
   polisapi:
-    image: ${DOCKER_REGISTRY-}polisapi
+    image: frampt/polisapi
     ports: 
       - "8081:80"
     build:
