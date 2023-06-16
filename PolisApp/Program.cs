@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(); 
+builder.Services.AddMudServices();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

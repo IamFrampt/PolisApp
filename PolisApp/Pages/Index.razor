@@ -1,25 +1,32 @@
 ﻿@page "/"
 @using Newtonsoft.Json;
+@using PolisApp.Models;
 @inject HttpClient client;
 
-<h1> Vart vill du se brott som har hänt? </h1>
+<MudContainer MaxWidth="MaxWidth.Medium">
 
-<EditForm Model="@NamnpaStad" OnValidSubmit="Handlethisshit">
-    <InputText class="form-control" @bind-Value=NamnpaStad.Namn></InputText>
-    <button class="btn btn-success my-3" type="submit">Se alla dagens brott</button>
-</EditForm>
+<div class="d-flex justify-center">
+    <MudImage ObjectPosition="ObjectPosition.Center" Height="200" Width="400" src="https://polisen.se/Areas/Polisen/Content/Images/Polisen.svg" />
+</div>
 
+<MudText Align="Align.Center" Typo="Typo.h4">Vart vill du se de senaste brotten som har hänt?</MudText>
 
-<H1 class="mt-3">Här är alla brott i denna stad:</H1>
-<hr />
+<SearchCrimeInCities @ref="searchCrimeInCities" NameStadChanged="HandleNameStadChanged"></SearchCrimeInCities>
 
 @if (NameStad is not null && NameStad.Count > 0)
 {
-    @foreach (var stad in NameStad.Take(10))
-    {
-        <h1>@stad.Name</h1>
-        <p>@stad.Summary</p>
-        <hr />
+    @foreach (var stad in NameStad.Skip(AmountOfItemsToShowOnPage * pageNumber).Take(AmountOfItemsToShowOnPage * pageMultiplier))
+        {
+            <MudCard Outlined="true">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-5">@stad.Name</MudText>
+                    <MudText Typo="Typo.body2" Align="Align.Center">@stad.Summary</MudText>
+                </MudCardContent>
+                <MudCardActions Class="justify-end">
+                        <MudLink Href="@($"https://polisen.se{stad.Url}")" Target="_blank">Läs mer här!</MudLink>
+                </MudCardActions>
+            </MudCard>
+
     }
 }
 else
@@ -27,364 +34,50 @@ else
     <p>@message</p>
 }
 
+    <div class="d-flex justify-center">
+    <MudButtonGroup Ali Color="Color.Primary" Variant="Variant.Text" OverrideStyles="_overrideStyles">
+        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((AmountOfItemsToShowOnPage * pageNumber) == 0)">Föregående Sida</MudButton>
+        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((AmountOfItemsToShowOnPage * pageMultiplier) > NameStad.Count)>Nästa Sida</MudButton>
+    </MudButtonGroup>
+</div>
+
+
+<MudScrollToTop>
+    <MudFab Color="Color.Tertiary" Icon="@Icons.Material.Filled.ArrowCircleUp" />
+</MudScrollToTop>
+</MudContainer>
+
 @code {
-    bool running = false;
 
-    string message = "Inga brott i denna stad";
+    List<CityDTO> NameStad = new();
+    private bool _overrideStyles;
+    private string message { get; set; } = "Inga brott hittades.";
+    bool IsDisabled = false;
 
 
-    public async Task Handlethisshit()
+
+    private SearchCrimeInCities searchCrimeInCities = new();
+
+    private int AmountOfItemsToShowOnPage = 10;
+    private int pageNumber = 0;
+    private int pageMultiplier = 1;
+
+    private void HandleNameStadChanged(List<CityDTO> updatedNameStad)
     {
-        try
-        {
-            running = true;
-            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={NamnpaStad.Namn}");
-
-            if (!res.IsSuccessStatusCode)
-            {
-                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?name={NamnpaStad.Namn}");
-            }
-
-            var content = await res.Content.ReadAsStringAsync();
-            NameStad = JsonConvert.DeserializeObject<List<SearchedStad>>(content);
-
-
-            if (running)
-            {
-                message = "loading";
-                if (NameStad is not null && NameStad.Count == 0)
-                {
-
-                    message = "Inga brott i denna stad";
-                }
-                if (NameStad is null)
-                {
-                    message = "crashed";
-                }
-            }
-
-        }
-        catch
-        {
-            NameStad = null;
-        }
+        NameStad = updatedNameStad;
     }
 
-    Stad NamnpaStad = new();
-
-
-    List<SearchedStad> NameStad = new();
-
-    public class Stad
+    private void ChangeToPreviousPage()
     {
-        public string Namn { get; set; }
-    }
+        pageNumber -= 1;
+        pageMultiplier -= 1;
 
-    public class SearchedStad
+    }
+    private void ChangeToNextPage()
     {
-        public int Id { get; set; }
-        public string Datetime { get; set; }
-        public string Name { get; set; }
-        public string Summary { get; set; }
-        public string Url { get; set; }
-        public string Type { get; set; }
-        public Location Location { get; set; }
-    }
+        pageNumber += 1;
+        pageMultiplier += 1;
 
-    public class Location
-    {
-        public string Name { get; set; }
-        public string Gps { get; set; }
     }
-
-    string[] swedishCities = {
-    "Ale",
-    "Alingsås",
-    "Alvesta",
-    "Aneby",
-    "Arboga",
-    "Arjeplog",
-    "Arvidsjaur",
-    "Arvika",
-    "Askersund",
-    "Avesta",
-    "Bengtsfors",
-    "Berg",
-    "Bjurholm",
-    "Bjuv",
-    "Boden",
-    "Bollebygd",
-    "Bollnäs",
-    "Borgholm",
-    "Borlänge",
-    "Borås",
-    "Botkyrka",
-    "Boxholm",
-    "Bromölla",
-    "Bräcke",
-    "Burlöv",
-    "Båstad",
-    "Dals-Ed",
-    "Danderyd",
-    "Degerfors",
-    "Dorotea",
-    "Eda",
-    "Ekerö",
-    "Eksjö",
-    "Emmaboda",
-    "Enköping",
-    "Eskilstuna",
-    "Eslöv",
-    "Essunga",
-    "Fagersta",
-    "Falkenberg",
-    "Falköping",
-    "Falun",
-    "Filipstad",
-    "Finspång",
-    "Flen",
-    "Forshaga",
-    "Färgelanda",
-    "Gagnef",
-    "Gislaved",
-    "Gnesta",
-    "Gnosjö",
-    "Gotland",
-    "Grums",
-    "Grästorp",
-    "Gullspång",
-    "Gällivare",
-    "Gävle",
-    "Göteborg",
-    "Götene",
-    "Habo",
-    "Hagfors",
-    "Hallsberg",
-    "Hallstahammar",
-    "Halmstad",
-    "Hammarö",
-    "Haninge",
-    "Haparanda",
-    "Heby",
-    "Hedemora",
-    "Helsingborg",
-    "Herrljunga",
-    "Hjo",
-    "Hofors",
-    "Huddinge",
-    "Hudiksvall",
-    "Hultsfred",
-    "Hylte",
-    "Håbo",
-    "Hällefors",
-    "Härjedalen",
-    "Härnösand",
-    "Härryda",
-    "Hässleholm",
-    "Höganäs",
-    "Högsby",
-    "Hörby",
-    "Höör",
-    "Jokkmokk",
-    "Järfälla",
-    "Jönköping",
-    "Kalix",
-    "Kalmar",
-    "Karlsborg",
-    "Karlshamn",
-    "Karlskoga",
-    "Karlskrona",
-    "Karlstad",
-    "Katrineholm",
-    "Kil",
-    "Kinda",
-    "Kiruna",
-    "Klippan",
-    "Knivsta",
-    "Kramfors",
-    "Kristianstad",
-    "Kristinehamn",
-    "Krokom",
-    "Kumla",
-    "Kungsbacka",
-    "Kungsör",
-    "Kungälv",
-    "Kävlinge",
-    "Köping",
-    "Laholm",
-    "Landskrona",
-    "Laxå",
-    "Lekeberg",
-    "Leksand",
-    "Lerum",
-    "Lessebo",
-    "Lidingö",
-    "Lidköping",
-    "Lilla Edet",
-    "Lindesberg",
-    "Linköping",
-    "Ljungby",
-    "Ljusdal",
-    "Ljusnarsberg",
-    "Lomma",
-    "Ludvika",
-    "Luleå",
-    "Lund",
-    "Lycksele",
-    "Lysekil",
-    "Lärbro",
-    "Länghem",
-    "Löddeköpinge",
-    "Malmö",
-    "Malung-Sälen",
-    "Mariestad",
-    "Mark",
-    "Markaryd",
-    "Mellerud",
-    "Mjölby",
-    "Mora",
-    "Motala",
-    "Mullsjö",
-    "Munkedal",
-    "Munkfors",
-    "Mölndal",
-    "Mönsterås",
-    "Mörbylånga",
-    "Nacka",
-    "Nora",
-    "Norberg",
-    "Nordanstig",
-    "Nordmaling",
-    "Norrköping",
-    "Norrtälje",
-    "Norsjö",
-    "Nybro",
-    "Nykvarn",
-    "Nyköping",
-    "Nynäshamn",
-    "Nässjö",
-    "Ockelbo",
-    "Olofström",
-    "Orsa",
-    "Osby",
-    "Oskarshamn",
-    "Ovanåker",
-    "Oxelösund",
-    "Pajala",
-    "Partille",
-    "Perstorp",
-    "Piteå",
-    "Ragunda",
-    "Robertsfors",
-    "Ronneby",
-    "Rättvik",
-    "Sala",
-    "Salem",
-    "Sandviken",
-    "Sigtuna",
-    "Simrishamn",
-    "Sjöbo",
-    "Skara",
-    "Skellefteå",
-    "Skinnskatteberg",
-    "Skurup",
-    "Skövde",
-    "Smedjebacken",
-    "Sollefteå",
-    "Sollentuna",
-    "Solna",
-    "Sorsele",
-    "Sotenäs",
-    "Staffanstorp",
-    "Stenungsund",
-    "Stockholm",
-    "Storfors",
-    "Storuman",
-    "Strängnäs",
-    "Strömstad",
-    "Strömsund",
-    "Sundbyberg",
-    "Sundsvall",
-    "Sunne",
-    "Surahammar",
-    "Svalöv",
-    "Svedala",
-    "Svenljunga",
-    "Säffle",
-    "Säter",
-    "Sävsjö",
-    "Söderhamn",
-    "Söderköping",
-    "Södertälje",
-    "Sölvesborg",
-    "Tanum",
-    "Tibro",
-    "Tidaholm",
-    "Tierp",
-    "Timrå",
-    "Tingsryd",
-    "Tjörn",
-    "Tomelilla",
-    "Torsby",
-    "Torsås",
-    "Tranemo",
-    "Tranås",
-    "Trelleborg",
-    "Trollhättan",
-    "Trosa",
-    "Tyresö",
-    "Täby",
-    "Töreboda",
-    "Uddevalla",
-    "Ulricehamn",
-    "Umeå",
-    "Upplands Väsby",
-    "Upplands-Bro",
-    "Uppsala",
-    "Vadstena",
-    "Vaggeryd",
-    "Valdemarsvik",
-    "Vallentuna",
-    "Vansbro",
-    "Vara",
-    "Varberg",
-    "Vaxholm",
-    "Vellinge",
-    "Vetlanda",
-    "Vimmerby",
-    "Vindeln",
-    "Vingåker",
-    "Vårgårda",
-    "Vänersborg",
-    "Vännäs",
-    "Värmdö",
-    "Värnamo",
-    "Västervik",
-    "Västerås",
-    "Växjö",
-    "Ydre",
-    "Ystad",
-    "Åmål",
-    "Ånge",
-    "Åre",
-    "Årjäng",
-    "Åsele",
-    "Åstorp",
-    "Åtvidaberg",
-    "Älmhult",
-    "Älvdalen",
-    "Älvkarleby",
-    "Älvsbyn",
-    "Ängelholm",
-    "Öckerö",
-    "Ödeshög",
-    "Örebro",
-    "Örkelljunga",
-    "Örnsköldsvik",
-    "Östersund",
-    "Österåker",
-    "Östhammar",
-    "Östra Göinge"
-};
 
 }
