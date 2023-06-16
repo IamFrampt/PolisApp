@@ -131,17 +131,17 @@
         try
         {
             _processing = true;
-            selectedOptionsString = "?type=" + string.Join(";", options);
+            selectedOptionsString = string.Join(";", options);
 
             selectedOptionsString = selectedOptionsString.Replace(" ", "%C2%A0");
             selectedOptionsString = selectedOptionsString.Replace("å", "%C3%A5");
             selectedOptionsString = selectedOptionsString.Replace("ä", "%C3%A4");
             selectedOptionsString = selectedOptionsString.Replace("ö", "%C3%B6");
-            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={selectedOptionsString}");
+            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Typ?searchWord={selectedOptionsString}");
 
             if (!res.IsSuccessStatusCode)
             {
-                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?name={selectedOptionsString}");
+                res = await client.GetAsync($"http://host.docker.internal:8081/Typ?searchWord={selectedOptionsString}");
             }
 
             var content = await res.Content.ReadAsStringAsync();

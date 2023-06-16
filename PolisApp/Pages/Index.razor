@@ -11,24 +11,40 @@
 
 <MudText Align="Align.Center" Typo="Typo.h4" Class="mt-10">Sök efter senaste brotten:</MudText>
 
-    <SearchCrimeInCities crimeListChanged="HandleCrimeListChanged"></SearchCrimeInCities>
-    @* <SearchForTypeOfCrime crimeListChanged="HandleCrimeListChanged"></SearchForTypeOfCrime>*@
+<SearchCrimeInCities @ref="searchCrimeInCities" crimeListChanged="HandleCrimeListChanged"></SearchCrimeInCities>
 
 @if (crimeList is not null && crimeList.Count > 0)
 {
-    @foreach (var stad in crimeList.Skip(AmountOfItemsToShowOnPage * pageNumber).Take(AmountOfItemsToShowOnPage * pageMultiplier))
+    @foreach (var crime in crimeList.Skip(amountOfCrimesToShow * pageNumber).Take(amountOfCrimesToShow * pageMultiplier))
         {
             <MudCard Outlined="true">
                 <MudCardContent>
-                    <MudText Typo="Typo.h4" Align="Align.Center">@stad.Name.Substring(14,stad.Name.Length-14)</MudText>
-                    <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-5">@stad.Name.Substring(0,13)</MudText>
-                    <MudText Typo="Typo.body1" Align="Align.Center">@stad.Summary</MudText>
+                    <MudText Typo="Typo.h4" Align="Align.Center">
+                        @{
+                            string[] nameSplit = crime.Name.Split(',');
+                            if (nameSplit.Length > 1)
+                            {
+                                string textAfterComma = string.Join(',', nameSplit[1..]);
+                                @textAfterComma
+                            }
+                        }
+                    </MudText>
+                    <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-5">
+                        @{
+                        string[] nameSplit = crime.Name.Split(',');
+                        if (nameSplit.Length > 0)
+                        {
+                        string firstSegment = nameSplit[0].Trim(',');
+                        @firstSegment
+                        }
+                        }
+                    </MudText>
+                    <MudText Typo="Typo.body1" Align="Align.Center">@crime.Summary</MudText>
                 </MudCardContent>
                 <MudCardActions Class="justify-end">
-                        <MudLink Href="@($"https://polisen.se{stad.Url}")" Target="_blank">Läs mer här!</MudLink>
+                        <MudLink Href="@($"https://polisen.se{crime.Url}")" Target="_blank">Läs mer här!</MudLink>
                 </MudCardActions>
             </MudCard>
-
     }
 }
 else
@@ -38,8 +54,8 @@ else
 
     <div class="d-flex justify-center">
     <MudButtonGroup Ali Color="Color.Primary" Variant="Variant.Text" OverrideStyles="_overrideStyles">
-        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((AmountOfItemsToShowOnPage * pageNumber) == 0)">Föregående Sida</MudButton>
-        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((AmountOfItemsToShowOnPage * pageMultiplier) > crimeList.Count)>Nästa Sida</MudButton>
+        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((amountOfCrimesToShow * pageNumber) == 0)">Föregående Sida</MudButton>
+        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((amountOfCrimesToShow * pageMultiplier) > crimeList.Count)>Nästa Sida</MudButton>
     </MudButtonGroup>
 </div>
 
@@ -56,13 +72,16 @@ else
     private string message { get; set; } = "Inga brott hittades.";
     bool IsDisabled = false;
 
-    private int AmountOfItemsToShowOnPage = 10;
+    private SearchCrimeInCities searchCrimeInCities = new();
+
+    private int amountOfCrimesToShow = 10;
     private int pageNumber = 0;
     private int pageMultiplier = 1;
 
-    private void HandleCrimeListChanged(List<CrimeDTO> updatedNameStad)
+    private void HandleCrimeListChanged(List<CrimeDTO> updatedCrimeList)
     {
-        crimeList = updatedNameStad;
+        crimeList = updatedCrimeList;
+        pageNumber = 0;
     }
 
     private void ChangeToPreviousPage()

@@ -24,10 +24,11 @@
 
 @code {
 
-    public List<CrimeDTO> NameStad = new();
+    public List<CrimeDTO> crimeList = new();
     private string value { get; set; } = "Nothing selected";
     private IEnumerable<string> options { get; set; } = new HashSet<string>() { };
     private string selectedOptionsString { get; set; } = "";
+
     string[] swedishCities = {
     "Ale",
     "Alingsås",
@@ -329,22 +330,22 @@
         try
         {
             _processing = true;
-            selectedOptionsString = "?locationname=" + string.Join(";", options);
-            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={selectedOptionsString}");
+            selectedOptionsString =string.Join(";", options);
+            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?searchWord={selectedOptionsString}");
 
             if (!res.IsSuccessStatusCode)
             {
-                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?name={selectedOptionsString}");
+                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?searchWord={selectedOptionsString}");
             }
 
             var content = await res.Content.ReadAsStringAsync();
-            NameStad = JsonConvert.DeserializeObject<List<CrimeDTO>>(content);
-            crimeListChanged.InvokeAsync(NameStad);
+            crimeList = JsonConvert.DeserializeObject<List<CrimeDTO>>(content);
+            crimeListChanged.InvokeAsync(crimeList);
             _processing = false;
         }
         catch
         {
-            NameStad = null;
+            crimeList = null;
         }
     }
 

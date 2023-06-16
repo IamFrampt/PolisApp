@@ -16,23 +16,36 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/Stad", async (string name) =>
+app.MapGet("/Stad", async (string searchWord) =>
 {
     HttpClient client = new HttpClient();
-    var Staddusokt = await client.GetAsync($"http://polisen.se/api/events{name}");
-    var res = await Staddusokt.Content.ReadAsStringAsync();
+    var res = await client.GetAsync($"http://polisen.se/api/events?locationName={searchWord}");
+    var content = await res.Content.ReadAsStringAsync();
 
-    var jabba = JsonConvert.DeserializeObject<List<SearchedStad>>(res);
+    var crimeList = JsonConvert.DeserializeObject<List<crimeDTO>>(content);
 
-    return jabba;
+    return crimeList;
 })
-.WithName("GetStad")
+.WithName("GetCrimesFromCities")
+.WithOpenApi();
+
+app.MapGet("/Typ", async (string searchWord) =>
+{
+    HttpClient client = new HttpClient();
+    var res = await client.GetAsync($"http://polisen.se/api/events?type={searchWord}");
+    var content = await res.Content.ReadAsStringAsync();
+
+    var crimeList = JsonConvert.DeserializeObject<List<crimeDTO>>(content);
+
+    return crimeList;
+})
+.WithName("GetCrimesFromTypes")
 .WithOpenApi();
 
 
 app.Run();
 
-public class SearchedStad
+public class crimeDTO
 {
     public int Id { get; set; }
     public string Datetime { get; set; }
