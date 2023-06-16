@@ -5,14 +5,12 @@
 <h1> Vart vill du se brott som har hänt? </h1>
 
 <EditForm Model="@NamnpaStad" OnValidSubmit="Handlethisshit">
-
-    <label class="form-label">Stad</label>
     <InputText class="form-control" @bind-Value=NamnpaStad.Namn></InputText>
     <button class="btn btn-success my-3" disabled="@running" type="submit">Se alla dagens brott</button>
 </EditForm>
 
 
-<H1 class="my-5">Här är alla brott i denna stad:</H1>
+<H1 class="mt-3">Här är alla brott i denna stad:</H1>
 <hr />
 
 @if (NameStad is not null && NameStad.Count > 0)
@@ -26,31 +24,35 @@
 }
 else
 {
-    <p>Inga brott i denna stad</p>
+    <p>@message</p>
 }
 
 @code{
     bool running = false;
 
+    string message = "Inga brott i denna stad";
 
-    public async void Handlethisshit()
+
+    public async Task Handlethisshit()
     {
-        running = true;
         try
         {
             var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?name={NamnpaStad.Namn}");
+            running = true;
             //var res = await client.GetAsync($"http://host.docker.internal:8081?name={NamnpaStad.Namn}");
             var content = await res.Content.ReadAsStringAsync();
             NameStad = JsonConvert.DeserializeObject<List<SearchedStad>>(content);
 
-            if(content != "")
+            if(running)
             {
-                
-            if (NameStad.Count > 0)
-            {
-                running=false;
+                message = "loading";
+                if(NameStad is not null && NameStad.Count==0)
+                {
+
+                    message = "Inga brott i denna stad";
+                }
             }
-            }
+
         }
         catch
         {
