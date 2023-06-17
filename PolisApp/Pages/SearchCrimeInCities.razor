@@ -3,14 +3,22 @@
 @using static PolisApp.Pages.Index;
 @inject HttpClient client;
 
-<MudSelect T="string" Label="Städer" SelectAll="true" MultiSelection="true" @bind-Value="value" @bind-SelectedValues="options">
+<MudSelect T="string" Label="Städer (Kan lämnas tom)" Class="custom-select" MultiSelection="true" @bind-Value="valueCity" @bind-SelectedValues="optionsCity">
+    
     @foreach (var state in swedishCities)
     {
         <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
     }
 </MudSelect>
 
-<MudButton Variant="Variant.Filled" Disabled="@_processing" Class="my-3" type="button" @onclick="GettingAllCrimesFromSelectedCities">
+<MudSelect T="string" Label="Typ av brott (Kan lämnas tom)" MultiSelection="true" @bind-Value="valueType" @bind-SelectedValues="optionsType">
+    @foreach (var state in typeOfCrimes)
+    {
+        <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
+    }
+</MudSelect>
+
+<MudButton Variant="Variant.Filled" Disabled="@_processing" Class="my-3" @onclick="GettingAllCrimesFromSelectedCities">
     @if (_processing)
     {
         <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
@@ -22,12 +30,21 @@
     }
 </MudButton>
 
+
+<MudButton Variant="Variant.Filled" Class="my-3 ms-3 justify-end" Disabled="@(_processing || (optionsCity.Count() ==0) && (optionsType.Count() ==0) )" @onclick="ClearOptions">Ta bort alla val</MudButton>
+
+
 @code {
 
     public List<CrimeDTO> crimeList = new();
-    private string value { get; set; } = "Nothing selected";
-    private IEnumerable<string> options { get; set; } = new HashSet<string>() { };
-    private string selectedOptionsString { get; set; } = "";
+    public List<CrimeDTO> filteredCrimeList = new();
+
+    private string valueCity { get; set; } = "Nothing selected";
+    private IEnumerable<string> optionsCity { get; set; } = new HashSet<string>() { };
+    private string valueType { get; set; } = "Nothing selected";
+    private IEnumerable<string> optionsType { get; set; } = new HashSet<string>() { };
+    private string selectedCities { get; set; } = "";
+    private string selectedTypes { get; set; } = "";
 
     string[] swedishCities = {
     "Ale",
@@ -318,35 +335,123 @@
     "Östhammar",
     "Östra Göinge"
 };
+    string[] typeOfCrimes = new string[]
+    {
+    "Arbetsplatsolycka",
+    "Bedrägeri",
+    "Bombhot",
+    "Brand",
+    "Bråk",
+    "Detonation",
+    "Djur",
+    "Ekobrott",
+    "Farligt föremål",
+    "Fjällräddning",
+    "Fylleri/LOB",
+    "Förfalskningsbrott",
+    "Försvunnen person",
+    "Gränskontroll",
+    "Häleri",
+    "Inbrott",
+    "Knivlagen",
+    "Kontroll person/fordon",
+    "Larm",
+    "Lagen om hundar och katter",
+    "Luftfartslagen",
+    "Miljöbrott",
+    "Missbruk",
+    "Misshandel",
+    "Mord/dråp",
+    "Motorfordon",
+    "Narkotikabrott",
+    "Naturkatastrof",
+    "Ofog",
+    "Ofredande",
+    "Olaga frihetsberövande",
+    "Olaga hot",
+    "Olaga intrång",
+    "Olovlig körning",
+    "Ordningslagen",
+    "Olycksfall",
+    "Polisinsats",
+    "Rattfylleri",
+    "Rån",
+    "Räddningsinsats",
+    "Sedlighetsbrott",
+    "Sjukdom",
+    "Sjölagen",
+    "Skadegörelse",
+    "Skottlossning",
+    "Spridning smittsamma kemikalier",
+    "Stöld",
+    "Tillfälligt obemannat",
+    "Trafikbrott",
+    "Trafikhinder",
+    "Trafikkontroll",
+    "Trafikolycka",
+    "Vapenlagen",
+    "Varningslarm",
+    "Våld",
+    "Våldtäkt"
+    };
 
     private bool _processing = false;
 
     [Parameter]
     public EventCallback<List<CrimeDTO>> crimeListChanged { get; set; }
 
-
     private async Task GettingAllCrimesFromSelectedCities()
     {
         try
         {
             _processing = true;
-            selectedOptionsString =string.Join(";", options);
-            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?searchWord={selectedOptionsString}");
+            selectedCities = string.Join(";", optionsCity);
+            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?searchWord={selectedCities}");
 
             if (!res.IsSuccessStatusCode)
             {
-                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?searchWord={selectedOptionsString}");
+                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?searchWord={selectedCities}");
             }
 
             var content = await res.Content.ReadAsStringAsync();
             crimeList = JsonConvert.DeserializeObject<List<CrimeDTO>>(content);
-            crimeListChanged.InvokeAsync(crimeList);
             _processing = false;
+            if(crimeList is not null)
+            {   
+                FilterCrimesList();
+            }
         }
         catch
         {
             crimeList = null;
         }
+    }
+
+    private async Task FilterCrimesList()
+    {
+        var selectedTypesArray = optionsType.ToArray();
+
+        if (selectedTypesArray.Length > 0)
+        {
+            filteredCrimeList = crimeList
+                .Where(crime => selectedTypesArray.Any(type => crime.Type.Contains(type)))
+                .ToList();
+
+            await crimeListChanged.InvokeAsync(filteredCrimeList);
+        }
+        else
+        {
+            await crimeListChanged.InvokeAsync(crimeList);
+        }
+
+    }
+
+    private void ClearOptions()
+    {
+        optionsCity = new HashSet<string>();
+        optionsType = new HashSet<string>();
+        valueCity = "Nothing selected";
+        valueType = "Nothing selected";
     }
 
 }

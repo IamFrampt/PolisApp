@@ -3,13 +3,13 @@
 @using PolisApp.Models;
 @inject HttpClient client;
 
-<MudContainer MaxWidth="MaxWidth.Medium">
+<MudContainer MaxWidth="MaxWidth.Medium" class="container-with-background">
 
 <div class="d-flex justify-center">
         <MudImage Fluid="true" ObjectPosition="ObjectPosition.Center" Height="200" Width="400" src="https://polisen.se/Areas/Polisen/Content/Images/Polisen.svg" />
 </div>
 
-<MudText Align="Align.Center" Typo="Typo.h4" Class="mt-10">Sök efter senaste brotten:</MudText>
+<MudText Align="Align.Center" Typo="Typo.h4" Class="mt-10">Sök efter de senaste brotten:</MudText>
 
 <SearchCrimeInCities @ref="searchCrimeInCities" crimeListChanged="HandleCrimeListChanged"></SearchCrimeInCities>
 
@@ -42,20 +42,20 @@
                     <MudText Typo="Typo.body1" Align="Align.Center">@crime.Summary</MudText>
                 </MudCardContent>
                 <MudCardActions Class="justify-end">
-                        <MudLink Href="@($"https://polisen.se{crime.Url}")" Target="_blank">Läs mer här!</MudLink>
+                    <MudLink Href="@($"https://polisen.se{crime.Url}")" Color="Color.Info" Target="_blank">Läs mer här!</MudLink>
                 </MudCardActions>
             </MudCard>
     }
 }
 else
 {
-    <p>@message</p>
+    <MudText Class="my-3">@message</MudText>
 }
 
     <div class="d-flex justify-center">
     <MudButtonGroup Ali Color="Color.Primary" Variant="Variant.Text" OverrideStyles="_overrideStyles">
-        <MudButton Class="me-5" Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((amountOfCrimesToShow * pageNumber) == 0)">Föregående Sida</MudButton>
-        <MudButton Color="@(IsDisabled ? Color.Dark : Color.Primary)" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((amountOfCrimesToShow * pageMultiplier) > crimeList.Count)>Nästa Sida</MudButton>
+        <MudButton Class="me-5" Color="Color.Info" Variant="Variant.Text" @onclick="(()=> ChangeToPreviousPage())" Disabled="@((amountOfCrimesToShow * pageNumber) == 0)">Föregående Sida</MudButton>
+            <MudButton Color="Color.Info" Variant="Variant.Text" @onclick="(()=>ChangeToNextPage())" Disabled=@((amountOfCrimesToShow * pageMultiplier) > crimeList.Count)>Nästa Sida</MudButton>
     </MudButtonGroup>
 </div>
 
