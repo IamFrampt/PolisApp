@@ -18,20 +18,28 @@
     }
 </MudSelect>
 
-<MudButton Variant="Variant.Filled" Disabled="@_processing" Class="my-3" @onclick="GettingAllCrimesFromSelectedCities">
-    @if (_processing)
-    {
-        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-        <MudText Class="ms-2">Hämtar brott</MudText>
-    }
-    else
-    {
-        <MudText>Sök efter brott</MudText>
-    }
-</MudButton>
 
 
-<MudButton Variant="Variant.Filled" Class="my-3 ms-3 justify-end" Disabled="@(_processing || (optionsCity.Count() ==0) && (optionsType.Count() ==0) )" @onclick="ClearOptions">Ta bort alla val</MudButton>
+
+
+<MudGrid>
+    <MudItem Class="d-flex">
+        <MudButton Variant="Variant.Filled" Disabled="@_processing" Class="my-3" @onclick="GettingAllCrimesFromSelectedCities">
+            @if (_processing)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Hämtar brott</MudText>
+            }
+            else
+            {
+                <MudText>Sök efter brott</MudText>
+            }
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Class="my-3 ms-3 justify-end" Disabled="@(_processing || (optionsCity.Count() == 0) && (optionsType.Count() == 0))" @onclick="ClearOptions">Ta bort alla val</MudButton>
+    </MudItem>
+</MudGrid>
+
+
 
 
 @code {
