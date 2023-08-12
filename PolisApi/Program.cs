@@ -2,24 +2,21 @@ using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.MapGet("/Stad", async (string searchWord) =>
+app.MapGet("/Stad", async (string cityNameOrNames) =>
 {
     HttpClient client = new HttpClient();
-    var res = await client.GetAsync($"http://polisen.se/api/events?locationName={searchWord}");
+    var res = await client.GetAsync($"http://polisen.se/api/events?locationName={cityNameOrNames}");
     var content = await res.Content.ReadAsStringAsync();
 
     var crimeList = JsonConvert.DeserializeObject<List<crimeDTO>>(content);
@@ -29,10 +26,10 @@ app.MapGet("/Stad", async (string searchWord) =>
 .WithName("GetCrimesFromCities")
 .WithOpenApi();
 
-app.MapGet("/Typ", async (string searchWord) =>
+app.MapGet("/Typ", async (string crimeTypeOrTypes) =>
 {
     HttpClient client = new HttpClient();
-    var res = await client.GetAsync($"http://polisen.se/api/events?type={searchWord}");
+    var res = await client.GetAsync($"http://polisen.se/api/events?type={crimeTypeOrTypes}");
     var content = await res.Content.ReadAsStringAsync();
 
     var crimeList = JsonConvert.DeserializeObject<List<crimeDTO>>(content);

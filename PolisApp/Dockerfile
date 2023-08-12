@@ -6,7 +6,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["PolisApp.csproj", "PolisApp/"]
-RUN dotnet restore "PolisApp/PolisApp.csproj" -r linux-arm64
+RUN dotnet restore "PolisApp/PolisApp.csproj"
 WORKDIR "/src/PolisApp"
 COPY . .
 RUN dotnet build "PolisApp.csproj" -c Release -o /app/build
