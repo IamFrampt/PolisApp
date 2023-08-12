@@ -9,19 +9,6 @@
         <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
     }
 </MudSelect>
-
-<MudButton Variant="Variant.Filled" Disabled="@_processing" Class="my-3" type="button" @onclick="GettingAllCrimesFromSelectedTypes">
-    @if (_processing)
-    {
-        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-        <MudText Class="ms-2">Hämtar brott</MudText>
-    }
-    else
-    {
-        <MudText>Sök efter brott</MudText>
-    }
-</MudButton>
-
 @code {
 
     public List<CrimeDTO> crimeList = new();
