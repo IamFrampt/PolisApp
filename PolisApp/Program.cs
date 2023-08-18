@@ -12,7 +12,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddMudServices();
 
 builder.Services.AddCors(options => { options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("http://docksarereal.azurewebsites.net").AllowAnyHeader().AllowAnyMethod()); });
-
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://docksarereal.azurewebsites.net") });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
