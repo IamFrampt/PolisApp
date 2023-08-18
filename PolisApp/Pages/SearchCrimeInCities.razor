@@ -414,7 +414,7 @@
         {
             _processing = true;
             selectedCities = string.Join(";", optionsCity);
-            var res = await client.GetAsync($"https://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?searchWord={selectedCities}");
+            var res = await client.GetAsync($"https://docksarereal.azurewebsites.net/Stad?searchWord={selectedCities}");
 
             if (!res.IsSuccessStatusCode)
             {
