@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  polisapp:
+    image: cloud22.azurecr.io/polisapp/frontend:latest
+    depends_on:
+      - polisapi
+    ports: 
+      - "8080:80"
+
+  polisapi:
+    image: cloud22.azurecr.io/polisapi/backend:latest
+    ports:     
+      - "8081:80"
