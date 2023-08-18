@@ -7,28 +7,16 @@ services:
       - polisapi
     ports: 
       - "8080:80"
+    networks:
+      - apiconnection
 
   polisapi:
     image: cloud22.azurecr.io/polisapi/backend:latest
     ports:     
       - "8081:80"
+    networks:
+      - apiconnection
 
-#version: '3'
-#services:
-#  backend:
-#    image: cloud22.azurecr.io/polisapi/backend:latest
-#    # Add any environment variables or other configuration settings for the backend service
-#    environment:
-#      - BACKEND_URL=http://polisapi:8081  # This should be the service name defined here
-#    ports:
-#      - "8081:80"  # Expose the backend service port
-
-#  frontend:
-#    image: cloud22.azurecr.io/polisapp/frontend:latest
-#    # Add any environment variables or other configuration settings for the frontend service
-#    environment:
-#      - BACKEND_URL=http://polisapi:8081  # Use the same service name as defined above
-#    ports:
-      - "8080:80"  # Expose the frontend service port
-    depends_on:
-      - backend  # Ensure that the backend service starts before the frontend 
+networks:
+    apiconnection:
+       driver: bridge
