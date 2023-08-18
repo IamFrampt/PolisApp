@@ -7,6 +7,9 @@ services:
       - polisapi
     ports: 
       - "8080:80" 
+    build:
+      context: .
+      dockerfile: PolisApp/Dockerfile
     networks:
       - apiconnection
 
@@ -14,7 +17,9 @@ services:
     image: cloud22.azurecr.io/polisapi/backend:latest
     ports:     
       - "8081:80"
-      - "443:80"   
+    build:
+      context: .
+      dockerfile: PolisApi/Dockerfile
     networks:
       - apiconnection
 
