@@ -10,8 +10,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient(); 
 builder.Services.AddMudServices();
 
-builder.Services.AddCors(options => { options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("http://docksarereal.azurewebsites.net", "http://docksarereal.azurewebsites.net/swagger").AllowAnyHeader().AllowAnyMethod()); });
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://docksarereal.azurewebsites.net") });
+builder.Services.AddCors(options => { options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("http://polisapi:8081", "http://polisapi:8081/swagger").AllowAnyHeader().AllowAnyMethod()); });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
