@@ -7,11 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-
 builder.Services.AddHttpClient(); 
 builder.Services.AddMudServices();
 
-builder.Services.AddCors(options => { options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("http://docksarereal.azurewebsites.net").AllowAnyHeader().AllowAnyMethod()); });
+builder.Services.AddCors(options => { options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("http://docksarereal.azurewebsites.net", "http://docksarereal.azurewebsites.net/swagger").AllowAnyHeader().AllowAnyMethod()); });
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://docksarereal.azurewebsites.net") });
 var app = builder.Build();
 
