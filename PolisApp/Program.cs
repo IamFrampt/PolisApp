@@ -7,7 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddHttpClient(); 
+
+builder.Services.AddHttpClient("PolisApi", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
+});
+
+
 builder.Services.AddMudServices();
 
 builder.Services.AddCors(options => { options.AddPolicy("AllowSpecificOrigin", builder => builder.WithOrigins("http://polisapi:8081", "http://polisapi:8081/swagger").AllowAnyHeader().AllowAnyMethod()); });

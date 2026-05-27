@@ -1,472 +1,198 @@
-﻿@using Newtonsoft.Json;
-@using PolisApp.Models;
-@using static PolisApp.Pages.Index;
-@inject HttpClient client;
+﻿@using Newtonsoft.Json
+@using PolisApp.Models
 
-<MudSelect T="string" Label="Städer (Kan lämnas tom)" Class="custom-select" MultiSelection="true" @bind-Value="valueCity" @bind-SelectedValues="optionsCity">
-    
-    @foreach (var state in swedishCities)
-    {
-        <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
-    }
-</MudSelect>
+@inject IHttpClientFactory HttpClientFactory
 
-<MudSelect T="string" Label="Typ av brott (Kan lämnas tom)" MultiSelection="true" @bind-Value="valueType" @bind-SelectedValues="optionsType">
-    @foreach (var state in typeOfCrimes)
-    {
-        <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
-    }
-</MudSelect>
+<MudPaper Class="pa-4">
 
+    <MudGrid Spacing="3">
 
+        <!-- CITIES -->
+        <MudItem xs="12" md="6">
 
+            <MudSelect T="string"
+                       Label="Städer"
+                       MultiSelection="true"
+                       Clearable="true"
+                       Variant="Variant.Outlined"
+                       SelectedValues="selectedCities"
+                       SelectedValuesChanged="OnCitiesChanged">
 
+                @foreach (var city in SwedishCities.OrderBy(x => x))
+                {
+                    <MudSelectItem T="string" Value="@city">
+                        @city
+                    </MudSelectItem>
+                }
 
-<MudGrid>
-    <MudItem Class="d-flex">
-        <MudButton Variant="Variant.Filled" Disabled="@_processing" Class="my-3" @onclick="GettingAllCrimesFromSelectedCities">
-            @if (_processing)
-            {
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                <MudText Class="ms-2 whitespace-nowrap">Hämtar brotten</MudText>
-            }
-            else
-            {
-                <MudText Class="whitespace-nowrap">Sök efter brott</MudText>
-            }
-        </MudButton>
-        <MudButton Variant="Variant.Filled" Class="my-3 ms-3 justify-end" Disabled="@(_processing || (optionsCity.Count() == 0) && (optionsType.Count() == 0))" @onclick="ClearOptions">Ta bort alla val</MudButton>
-    </MudItem>
-</MudGrid>
+            </MudSelect>
 
-<p>@errorMessage</p>
+        </MudItem>
 
+        <!-- CRIME TYPES -->
+        <MudItem xs="12" md="6">
 
+            <MudSelect T="string"
+                       Label="Typ av brott"
+                       MultiSelection="true"
+                       Clearable="true"
+                       Variant="Variant.Outlined"
+                       SelectedValues="selectedCrimeTypes"
+                       SelectedValuesChanged="OnCrimeTypesChanged">
 
+                @foreach (var crimeType in CrimeTypes.OrderBy(x => x))
+                {
+                    <MudSelectItem T="string" Value="@crimeType">
+                        @crimeType
+                    </MudSelectItem>
+                }
+
+            </MudSelect>
+
+        </MudItem>
+
+        <MudItem xs="12" Class="d-flex flex-wrap gap-2">
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="_isLoading"
+                       OnClick="GetCrimesAsync">
+
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="me-2" />
+                    <span>Hämtar brott...</span>
+                }
+                else
+                {
+                    <span>Sök efter brott</span>
+                }
+
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       Disabled="@(!_hasSelectedFilters || _isLoading)"
+                       OnClick="ClearSelections">
+
+                Rensa val
+
+            </MudButton>
+
+        </MudItem>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Error" Dense="true">
+                    @errorMessage
+                </MudAlert>
+            </MudItem>
+        }
+
+    </MudGrid>
+
+</MudPaper>
 
 @code {
 
-    public List<CrimeDTO> crimeList = new();
-    public List<CrimeDTO> filteredCrimeList = new();
-
-    private string valueCity { get; set; } = "Nothing selected";
-    private IEnumerable<string> optionsCity { get; set; } = new HashSet<string>() { };
-    private string valueType { get; set; } = "Nothing selected";
-    private IEnumerable<string> optionsType { get; set; } = new HashSet<string>() { };
-    private string selectedCities { get; set; } = "";
-    private string selectedTypes { get; set; } = "";
-    private string errorMessage = "";
-
-    string[] swedishCities = {
-    "Ale",
-    "Alingsås",
-    "Alvesta",
-    "Aneby",
-    "Arboga",
-    "Arjeplog",
-    "Arvidsjaur",
-    "Arvika",
-    "Askersund",
-    "Avesta",
-    "Bengtsfors",
-    "Berg",
-    "Bjurholm",
-    "Bjuv",
-    "Boden",
-    "Bollebygd",
-    "Bollnäs",
-    "Borgholm",
-    "Borlänge",
-    "Borås",
-    "Botkyrka",
-    "Boxholm",
-    "Bromölla",
-    "Bräcke",
-    "Burlöv",
-    "Båstad",
-    "Dals-Ed",
-    "Danderyd",
-    "Degerfors",
-    "Dorotea",
-    "Eda",
-    "Ekerö",
-    "Eksjö",
-    "Emmaboda",
-    "Enköping",
-    "Eskilstuna",
-    "Eslöv",
-    "Essunga",
-    "Fagersta",
-    "Falkenberg",
-    "Falköping",
-    "Falun",
-    "Filipstad",
-    "Finspång",
-    "Flen",
-    "Forshaga",
-    "Färgelanda",
-    "Gagnef",
-    "Gislaved",
-    "Gnesta",
-    "Gnosjö",
-    "Gotland",
-    "Grums",
-    "Grästorp",
-    "Gullspång",
-    "Gällivare",
-    "Gävle",
-    "Göteborg",
-    "Götene",
-    "Habo",
-    "Hagfors",
-    "Hallsberg",
-    "Hallstahammar",
-    "Halmstad",
-    "Hammarö",
-    "Haninge",
-    "Haparanda",
-    "Heby",
-    "Hedemora",
-    "Helsingborg",
-    "Herrljunga",
-    "Hjo",
-    "Hofors",
-    "Huddinge",
-    "Hudiksvall",
-    "Hultsfred",
-    "Hylte",
-    "Håbo",
-    "Hällefors",
-    "Härjedalen",
-    "Härnösand",
-    "Härryda",
-    "Hässleholm",
-    "Höganäs",
-    "Högsby",
-    "Hörby",
-    "Höör",
-    "Jokkmokk",
-    "Järfälla",
-    "Jönköping",
-    "Kalix",
-    "Kalmar",
-    "Karlsborg",
-    "Karlshamn",
-    "Karlskoga",
-    "Karlskrona",
-    "Karlstad",
-    "Katrineholm",
-    "Kil",
-    "Kinda",
-    "Kiruna",
-    "Klippan",
-    "Knivsta",
-    "Kramfors",
-    "Kristianstad",
-    "Kristinehamn",
-    "Krokom",
-    "Kumla",
-    "Kungsbacka",
-    "Kungsör",
-    "Kungälv",
-    "Kävlinge",
-    "Köping",
-    "Laholm",
-    "Landskrona",
-    "Laxå",
-    "Lekeberg",
-    "Leksand",
-    "Lerum",
-    "Lessebo",
-    "Lidingö",
-    "Lidköping",
-    "Lilla Edet",
-    "Lindesberg",
-    "Linköping",
-    "Ljungby",
-    "Ljusdal",
-    "Ljusnarsberg",
-    "Lomma",
-    "Ludvika",
-    "Luleå",
-    "Lund",
-    "Lycksele",
-    "Lysekil",
-    "Lärbro",
-    "Länghem",
-    "Löddeköpinge",
-    "Malmö",
-    "Malung-Sälen",
-    "Mariestad",
-    "Mark",
-    "Markaryd",
-    "Mellerud",
-    "Mjölby",
-    "Mora",
-    "Motala",
-    "Mullsjö",
-    "Munkedal",
-    "Munkfors",
-    "Mölndal",
-    "Mönsterås",
-    "Mörbylånga",
-    "Nacka",
-    "Nora",
-    "Norberg",
-    "Nordanstig",
-    "Nordmaling",
-    "Norrköping",
-    "Norrtälje",
-    "Norsjö",
-    "Nybro",
-    "Nykvarn",
-    "Nyköping",
-    "Nynäshamn",
-    "Nässjö",
-    "Ockelbo",
-    "Olofström",
-    "Orsa",
-    "Osby",
-    "Oskarshamn",
-    "Ovanåker",
-    "Oxelösund",
-    "Pajala",
-    "Partille",
-    "Perstorp",
-    "Piteå",
-    "Ragunda",
-    "Robertsfors",
-    "Ronneby",
-    "Rättvik",
-    "Sala",
-    "Salem",
-    "Sandviken",
-    "Sigtuna",
-    "Simrishamn",
-    "Sjöbo",
-    "Skara",
-    "Skellefteå",
-    "Skinnskatteberg",
-    "Skurup",
-    "Skövde",
-    "Smedjebacken",
-    "Sollefteå",
-    "Sollentuna",
-    "Solna",
-    "Sorsele",
-    "Sotenäs",
-    "Staffanstorp",
-    "Stenungsund",
-    "Stockholm",
-    "Storfors",
-    "Storuman",
-    "Strängnäs",
-    "Strömstad",
-    "Strömsund",
-    "Sundbyberg",
-    "Sundsvall",
-    "Sunne",
-    "Surahammar",
-    "Svalöv",
-    "Svedala",
-    "Svenljunga",
-    "Säffle",
-    "Säter",
-    "Sävsjö",
-    "Söderhamn",
-    "Söderköping",
-    "Södertälje",
-    "Sölvesborg",
-    "Tanum",
-    "Tibro",
-    "Tidaholm",
-    "Tierp",
-    "Timrå",
-    "Tingsryd",
-    "Tjörn",
-    "Tomelilla",
-    "Torsby",
-    "Torsås",
-    "Tranemo",
-    "Tranås",
-    "Trelleborg",
-    "Trollhättan",
-    "Trosa",
-    "Tyresö",
-    "Täby",
-    "Töreboda",
-    "Uddevalla",
-    "Ulricehamn",
-    "Umeå",
-    "Upplands Väsby",
-    "Upplands-Bro",
-    "Uppsala",
-    "Vadstena",
-    "Vaggeryd",
-    "Valdemarsvik",
-    "Vallentuna",
-    "Vansbro",
-    "Vara",
-    "Varberg",
-    "Vaxholm",
-    "Vellinge",
-    "Vetlanda",
-    "Vimmerby",
-    "Vindeln",
-    "Vingåker",
-    "Vårgårda",
-    "Vänersborg",
-    "Vännäs",
-    "Värmdö",
-    "Värnamo",
-    "Västervik",
-    "Västerås",
-    "Växjö",
-    "Ydre",
-    "Ystad",
-    "Åmål",
-    "Ånge",
-    "Åre",
-    "Årjäng",
-    "Åsele",
-    "Åstorp",
-    "Åtvidaberg",
-    "Älmhult",
-    "Älvdalen",
-    "Älvkarleby",
-    "Älvsbyn",
-    "Ängelholm",
-    "Öckerö",
-    "Ödeshög",
-    "Örebro",
-    "Örkelljunga",
-    "Örnsköldsvik",
-    "Östersund",
-    "Österåker",
-    "Östhammar",
-    "Östra Göinge"
-};
-    string[] typeOfCrimes = new string[]
-    {
-    "Arbetsplatsolycka",
-    "Bedrägeri",
-    "Bombhot",
-    "Brand",
-    "Bråk",
-    "Detonation",
-    "Djur",
-    "Ekobrott",
-    "Farligt föremål",
-    "Fjällräddning",
-    "Fylleri/LOB",
-    "Förfalskningsbrott",
-    "Försvunnen person",
-    "Gränskontroll",
-    "Häleri",
-    "Inbrott",
-    "Knivlagen",
-    "Kontroll person/fordon",
-    "Larm",
-    "Lagen om hundar och katter",
-    "Luftfartslagen",
-    "Miljöbrott",
-    "Missbruk",
-    "Misshandel",
-    "Mord/dråp",
-    "Motorfordon",
-    "Narkotikabrott",
-    "Naturkatastrof",
-    "Ofog",
-    "Ofredande",
-    "Olaga frihetsberövande",
-    "Olaga hot",
-    "Olaga intrång",
-    "Olovlig körning",
-    "Ordningslagen",
-    "Olycksfall",
-    "Polisinsats",
-    "Rattfylleri",
-    "Rån",
-    "Räddningsinsats",
-    "Sedlighetsbrott",
-    "Sjukdom",
-    "Sjölagen",
-    "Skadegörelse",
-    "Skottlossning",
-    "Spridning smittsamma kemikalier",
-    "Stöld",
-    "Tillfälligt obemannat",
-    "Trafikbrott",
-    "Trafikhinder",
-    "Trafikkontroll",
-    "Trafikolycka",
-    "Vapenlagen",
-    "Varningslarm",
-    "Våld",
-    "Våldtäkt"
-    };
-
-    private bool _processing = false;
-
     [Parameter]
-    public EventCallback<List<CrimeDTO>> crimeListChanged { get; set; }
+    public EventCallback<List<CrimeDTO>> CrimeListChanged { get; set; }
 
-    private async Task GettingAllCrimesFromSelectedCities()
+    private HashSet<string> selectedCities = new();
+    private HashSet<string> selectedCrimeTypes = new();
+
+    private async Task OnCitiesChanged(IReadOnlyCollection<string> values)
+    {
+        selectedCities = values.ToHashSet();
+        await FilterCrimesAsync();
+    }
+
+    private async Task OnCrimeTypesChanged(IReadOnlyCollection<string> values)
+    {
+        selectedCrimeTypes = values.ToHashSet();
+        await FilterCrimesAsync();
+    }
+
+    private List<CrimeDTO> crimeList = new();
+    private List<CrimeDTO> filteredCrimeList = new();
+
+    private bool _isLoading;
+    private string errorMessage = string.Empty;
+
+    private bool _hasSelectedFilters =>
+        selectedCities.Any() || selectedCrimeTypes.Any();
+
+    private async Task GetCrimesAsync()
     {
         try
         {
-            _processing = true;
-            selectedCities = string.Join(";", optionsCity);
-            //var res = await client.GetAsync($"http://polisapi:8081/Stad?searchWord={selectedCities}");
-            var res = await client.GetAsync($"http://polisapi.internal.gentlebush-8ad4885e.westeurope.azurecontainerapps.io/Stad?searchWord={selectedCities}");
+            _isLoading = true;
+            errorMessage = string.Empty;
 
-            if (!res.IsSuccessStatusCode)
-            {
-                res = await client.GetAsync($"http://host.docker.internal:8081/Stad?searchWord={selectedCities}");
-            }
+            var client = HttpClientFactory.CreateClient("PolisApi");
 
-            var content = await res.Content.ReadAsStringAsync();
-            crimeList = JsonConvert.DeserializeObject<List<CrimeDTO>>(content);
-            _processing = false;
-            if(crimeList is not null)
-            {   
-                FilterCrimesList();
-                errorMessage = "";
-            }
+            var selectedCitiesQuery = string.Join(";", selectedCities);
+
+            var apiUrl = $"/Stad?searchWord={selectedCitiesQuery}";
+
+            var response = await client.GetAsync(apiUrl);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            crimeList =
+                JsonConvert.DeserializeObject<List<CrimeDTO>>(json)
+                ?? new();
+
+            await FilterCrimesAsync();
         }
-        catch(Exception e)
+        catch (Exception ex)
         {
-            crimeList = null;
-            _processing = false;
-            errorMessage = "Sökning misslyckades!, " + e.Message;
+            crimeList.Clear();
+            filteredCrimeList.Clear();
+            errorMessage = $"Kunde inte hämta brott: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 
-    private async Task FilterCrimesList()
+    private async Task FilterCrimesAsync()
     {
-        var selectedTypesArray = optionsType.ToArray();
-
-        if (selectedTypesArray.Length > 0)
+        if (!selectedCrimeTypes.Any())
         {
-            filteredCrimeList = crimeList
-                .Where(crime => selectedTypesArray.Any(type => crime.Type.Contains(type)))
-                .ToList();
-
-            await crimeListChanged.InvokeAsync(filteredCrimeList);
-        }
-        else
-        {
-            await crimeListChanged.InvokeAsync(crimeList);
+            await CrimeListChanged.InvokeAsync(crimeList);
+            return;
         }
 
+        filteredCrimeList = crimeList
+            .Where(crime =>
+                selectedCrimeTypes.Any(type =>
+                    crime.Type.Contains(type, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        await CrimeListChanged.InvokeAsync(filteredCrimeList);
     }
 
-    private void ClearOptions()
+    private async Task ClearSelections()
     {
-        optionsCity = new HashSet<string>();
-        optionsType = new HashSet<string>();
-        valueCity = "Nothing selected";
-        valueType = "Nothing selected";
+        selectedCities.Clear();
+        selectedCrimeTypes.Clear();
+
+        crimeList.Clear();
+        filteredCrimeList.Clear();
+
+        errorMessage = string.Empty;
+
+        await CrimeListChanged.InvokeAsync(new List<CrimeDTO>());
     }
 
+    private readonly string[] SwedishCities =
+        {
+            "Ale", "Alingsås", "Alvesta", "Aneby", "Arboga", "Arjeplog", "Arvidsjaur", "Arvika", "Askersund", "Avesta", "Bengtsfors", "Berg", "Bjurholm", "Bjuv", "Boden", "Bollebygd", "Bollnäs", "Borgholm", "Borlänge", "Borås", "Botkyrka", "Boxholm", "Bromölla", "Bräcke", "Burlöv", "Båstad", "Dals-Ed", "Danderyd", "Degerfors", "Dorotea", "Eda", "Ekerö", "Eksjö", "Emmaboda", "Enköping", "Eskilstuna", "Eslöv", "Essunga", "Fagersta", "Falkenberg", "Falköping", "Falun", "Filipstad", "Finspång", "Flen", "Forshaga", "Färgelanda", "Gagnef", "Gislaved", "Gnesta", "Gnosjö", "Gotland", "Grums", "Grästorp", "Gullspång", "Gällivare", "Gävle", "Göteborg", "Götene", "Habo", "Hagfors", "Hallsberg", "Hallstahammar", "Halmstad", "Hammarö", "Haninge", "Haparanda", "Heby", "Hedemora", "Helsingborg", "Herrljunga", "Hjo", "Hofors", "Huddinge", "Hudiksvall", "Hultsfred", "Hylte", "Håbo", "Hällefors", "Härjedalen", "Härnösand", "Härryda", "Hässleholm", "Höganäs", "Högsby", "Hörby", "Höör", "Jokkmokk", "Järfälla", "Jönköping", "Kalix", "Kalmar", "Karlsborg", "Karlshamn", "Karlskoga", "Karlskrona", "Karlstad", "Katrineholm", "Kil", "Kinda", "Kiruna", "Klippan", "Knivsta", "Kramfors", "Kristianstad", "Kristinehamn", "Krokom", "Kumla", "Kungsbacka", "Kungsör", "Kungälv", "Kävlinge", "Köping", "Laholm", "Landskrona", "Laxå", "Lekeberg", "Leksand", "Lerum", "Lessebo", "Lidingö", "Lidköping", "Lilla Edet", "Lindesberg", "Linköping", "Ljungby", "Ljusdal", "Ljusnarsberg", "Lomma", "Ludvika", "Luleå", "Lund", "Lycksele", "Lysekil", "Lärbro", "Länghem", "Löddeköpinge", "Malmö", "Malung-Sälen", "Mariestad", "Mark", "Markaryd", "Mellerud", "Mjölby", "Mora", "Motala", "Mullsjö", "Munkedal", "Munkfors", "Mölndal", "Mönsterås", "Mörbylånga", "Nacka", "Nora", "Norberg", "Nordanstig", "Nordmaling", "Norrköping", "Norrtälje", "Norsjö", "Nybro", "Nykvarn", "Nyköping", "Nynäshamn", "Nässjö", "Ockelbo", "Olofström", "Orsa", "Osby", "Oskarshamn", "Ovanåker", "Oxelösund", "Pajala", "Partille", "Perstorp", "Piteå", "Ragunda", "Robertsfors", "Ronneby", "Rättvik", "Sala", "Salem", "Sandviken", "Sigtuna", "Simrishamn", "Sjöbo", "Skara", "Skellefteå", "Skinnskatteberg", "Skurup", "Skövde", "Smedjebacken", "Sollefteå", "Sollentuna", "Solna", "Sorsele", "Sotenäs", "Staffanstorp", "Stenungsund", "Stockholm", "Storfors", "Storuman", "Strängnäs", "Strömstad", "Strömsund", "Sundbyberg", "Sundsvall", "Sunne", "Surahammar", "Svalöv", "Svedala", "Svenljunga", "Säffle", "Säter", "Sävsjö", "Söderhamn", "Söderköping", "Södertälje", "Sölvesborg", "Tanum", "Tibro", "Tidaholm", "Tierp", "Timrå", "Tingsryd", "Tjörn", "Tomelilla", "Torsby", "Torsås", "Tranemo", "Tranås", "Trelleborg", "Trollhättan", "Trosa", "Tyresö", "Täby", "Töreboda", "Uddevalla", "Ulricehamn", "Umeå", "Upplands Väsby", "Upplands-Bro", "Uppsala", "Vadstena", "Vaggeryd", "Valdemarsvik", "Vallentuna", "Vansbro", "Vara", "Varberg", "Vaxholm", "Vellinge", "Vetlanda", "Vimmerby", "Vindeln", "Vingåker", "Vårgårda", "Vänersborg", "Vännäs", "Värmdö", "Värnamo", "Västervik", "Västerås", "Växjö", "Ydre", "Ystad", "Åmål", "Ånge", "Åre", "Årjäng", "Åsele", "Åstorp", "Åtvidaberg", "Älmhult", "Älvdalen", "Älvkarleby", "Älvsbyn", "Ängelholm", "Öckerö", "Ödeshög", "Örebro", "Örkelljunga", "Örnsköldsvik", "Östersund", "Österåker", "Östhammar", "Östra Göinge"
+        };
+
+    private readonly string[] CrimeTypes = { "Arbetsplatsolycka", "Bedrägeri", "Bombhot", "Brand", "Bråk", "Detonation", "Djur", "Ekobrott", "Farligt föremål", "Fjällräddning", "Fylleri/LOB", "Förfalskningsbrott", "Försvunnen person", "Gränskontroll", "Häleri", "Inbrott", "Knivlagen", "Kontroll person/fordon", "Larm", "Lagen om hundar och katter", "Luftfartslagen", "Miljöbrott", "Missbruk", "Misshandel", "Mord/dråp", "Motorfordon", "Narkotikabrott", "Naturkatastrof", "Ofog", "Ofredande", "Olaga frihetsberövande", "Olaga hot", "Olaga intrång", "Olovlig körning", "Ordningslagen", "Olycksfall", "Polisinsats", "Rattfylleri", "Rån", "Räddningsinsats", "Sedlighetsbrott", "Sjukdom", "Sjölagen", "Skadegörelse", "Skottlossning", "Spridning smittsamma kemikalier", "Stöld", "Tillfälligt obemannat", "Trafikbrott", "Trafikhinder", "Trafikkontroll", "Trafikolycka", "Vapenlagen", "Varningslarm", "Våld", "Våldtäkt" };
 }

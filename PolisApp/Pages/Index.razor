@@ -11,7 +11,9 @@
 
 <MudText Align="Align.Center" Typo="Typo.h4" Class="mt-10">Se de senaste brotten</MudText>
 
-<SearchCrimeInCities @ref="searchCrimeInCities" crimeListChanged="HandleCrimeListChanged"></SearchCrimeInCities>
+    <SearchCrimeInCities @ref="searchCrimeInCities"
+                         CrimeListChanged="@HandleCrimeListChanged">
+    </SearchCrimeInCities>
 
 @if (crimeList is not null && crimeList.Count > 0)
 {
@@ -72,7 +74,7 @@ else
     private string message { get; set; } = "Inga brott hittades.";
     bool IsDisabled = false;
 
-    private SearchCrimeInCities searchCrimeInCities = new();
+    private SearchCrimeInCities? searchCrimeInCities;
 
     private int amountOfCrimesToShow = 10;
     private int pageNumber = 0;

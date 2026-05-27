@@ -1,28 +1,37 @@
-version: '3.4'
-
 services:
-  polisapp:
-    image: frampt/polisapp    
-    depends_on:
-      - "polisapi"
-    ports: 
-      - "8080:80"
-    build:
-      context: .
-      dockerfile: PolisApp/Dockerfile
-    networks:
-      - apiconnection
 
   polisapi:
-    image: frampt/polisapi
-    ports: 
-      - "8081:80"
     build:
       context: .
       dockerfile: PolisApi/Dockerfile
+    image: frampt/polisapi
+    container_name: polisapi
+    ports:
+      - "8081:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_ENVIRONMENT=Development
     networks:
       - apiconnection
+    restart: unless-stopped
+
+  polisapp:
+    build:
+      context: .
+      dockerfile: PolisApp/Dockerfile
+    image: frampt/polisapp
+    container_name: polisapp
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ApiBaseUrl=http://polisapi
+    depends_on:
+      - polisapi
+    networks:
+      - apiconnection
+    restart: unless-stopped
 
 networks:
-    apiconnection:
-       driver: bridge
+  apiconnection:
+    driver: bridge
